@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>I Love You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap">
+<style>
+/* Layout: one full-screen pixel sky; each scene is a centered stage that swaps in place, like screens of a tiny handheld game. */
+:root {
+  --ink: #4a2453;
+  --rose: #e23d75;
+  --pink: #ff8fb4;
+  --blush: #ffd3e2;
+  --paper: #fff4f8;
+  --parch: #f3dfbd;
+  --gold: #ffcf6b;
+  --sky: #8a78d6;
+  --font-display: "Silkscreen", "Courier New", monospace;
+  --font-body: "VT323", "Courier New", monospace;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--sky); color: var(--ink);
+  font-family: var(--font-body); font-size: 22px;
+  -webkit-tap-highlight-color: transparent;
+}
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+canvas.sprite { image-rendering: pixelated; display: block; }
+
+.stage {
+  position: fixed; inset: 0; display: grid; place-items: center; overflow-y: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.scene {
+  width: min(100%, 760px); display: flex; flex-direction: column; align-items: center;
+  gap: 22px; text-align: center; animation: pop .35s steps(4) both;
+}
+[hidden] { display: none !important; }
+@keyframes pop { from { transform: scale(.92); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* pixel box: four offset shadows give notched corners */
+.px {
+  background: var(--paper); margin: 4px;
+  box-shadow: 4px 0 0 var(--ink), -4px 0 0 var(--ink), 0 4px 0 var(--ink), 0 -4px 0 var(--ink),
+              8px 8px 0 rgba(74, 36, 83, .22);
+}
+h1, h2, .label { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; }
+h1 {
+  font-size: clamp(28px, 7vw, 56px); line-height: 1.05; color: var(--paper); text-transform: uppercase;
+  text-shadow: 3px 3px 0 var(--rose), 6px 6px 0 var(--ink);
+}
+h2 {
+  font-size: clamp(20px, 4.5vw, 32px); color: var(--paper); letter-spacing: .04em;
+  text-shadow: 2px 2px 0 var(--rose), 4px 4px 0 var(--ink);
+}
+.small { font-family: var(--font-display); font-size: 12px; letter-spacing: .08em; color: var(--paper); text-shadow: 2px 2px 0 var(--ink); }
+
+.btn {
+  font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--paper); background: var(--rose);
+  border: 0; padding: 12px 22px; cursor: pointer; margin: 4px;
+  box-shadow: 4px 0 0 var(--ink), -4px 0 0 var(--ink), 0 4px 0 var(--ink), 0 -4px 0 var(--ink),
+              inset -4px -4px 0 rgba(74, 36, 83, .3), 6px 8px 0 rgba(74, 36, 83, .25);
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(2px); }
+.btn.ghost { background: var(--paper); color: var(--ink); }
+button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
+
+.bob { animation: bob 1.2s steps(2) infinite; }
+@keyframes bob { 50% { transform: translateY(-6px) } }
+
+/* lock */
+.slots { display: flex; gap: 10px; }
+.slots span { width: 28px; height: 32px; background-size: contain; background-repeat: no-repeat; }
+.keypad { display: grid; grid-template-columns: repeat(3, 64px); gap: 10px 16px; padding: 22px 26px; }
+.key {
+  width: 64px; height: 60px; border: 0; cursor: pointer; background: center / contain no-repeat;
+  font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--paper);
+  padding-bottom: 10px; text-shadow: 2px 2px 0 var(--ink);
+}
+.key:active { transform: scale(.9); }
+.lockmsg { min-height: 1.2em; font-size: 24px; color: var(--paper); text-shadow: 2px 2px 0 var(--ink); }
+.shake { animation: shake .4s steps(6); }
+@keyframes shake { 25% { transform: translateX(-8px) } 50% { transform: translateX(8px) } 75% { transform: translateX(-4px) } }
+
+/* speech */
+.talk { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; justify-content: center; }
+.bubble { position: relative; padding: 18px 22px; max-width: 340px; min-height: 3.4em; font-size: 28px; line-height: 1.05; text-align: left; }
+.bubble::before {
+  content: ""; position: absolute; left: -16px; top: 40%; width: 12px; height: 12px;
+  background: var(--paper); box-shadow: -4px 0 0 var(--ink), 0 -4px 0 var(--ink), 0 4px 0 var(--ink);
+}
+@media (max-width: 560px) { .bubble::before { display: none; } }
+
+/* gifts */
+.gifts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; width: 100%; max-width: 680px; }
+@media (max-width: 520px) { .gifts { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 320px; } }
+.gift { background: none; border: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px; }
+.gift canvas { width: min(96px, 22vw); height: auto; }
+.gift:hover canvas { animation: wiggle .5s steps(4) infinite; }
+@keyframes wiggle { 25% { transform: rotate(-6deg) } 75% { transform: rotate(6deg) } }
+.gift .label { font-size: 12px; color: var(--paper); text-shadow: 2px 2px 0 var(--ink); }
+.gift.opened canvas { filter: saturate(.3) brightness(1.15); }
+.gift.opened .label::after { content: " ✓"; }
+
+/* envelope + letter */
+.envelope { position: relative; width: min(300px, 80vw); aspect-ratio: 3 / 2; background: var(--blush); cursor: pointer; border: 0; padding: 0; }
+.envelope::before, .envelope::after { content: ""; position: absolute; inset: 0; }
+.envelope::after { background: var(--pink); clip-path: polygon(0 0, 100% 0, 50% 58%); transform-origin: top; transition: transform .5s steps(5); }
+.envelope::before { background: #f7b6cd; clip-path: polygon(0 100%, 50% 45%, 100% 100%); }
+.envelope.open::after { transform: scaleY(-1); }
+.seal { position: absolute; left: 50%; top: 46%; width: 44px; height: 50px; transform: translate(-50%, -50%); z-index: 2; background: center / contain no-repeat; transition: opacity .2s; }
+.envelope.open .seal { opacity: 0; }
+.letter {
+  width: min(100%, 620px); max-height: min(58vh, 520px); overflow-y: auto; text-align: left;
+  background: var(--parch); padding: 22px 26px; font-size: 25px; line-height: 1.12; white-space: pre-wrap;
+}
+.letter .cursor { display: inline-block; width: .5em; height: .9em; background: var(--ink); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0 } }
+
+/* photos */
+.dots { display: flex; gap: 8px; justify-content: center; }
+.dots i { width: 10px; height: 10px; background: var(--paper); box-shadow: 0 0 0 2px var(--ink); opacity: .45; }
+.dots i.on { background: var(--rose); opacity: 1; }
+.polaroid { margin: 4px; padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; width: min(100%, 360px); transform: rotate(-2deg); }
+.polaroid img { display: block; width: 100%; height: min(52vh, 440px); object-fit: cover; background: var(--blush); }
+.polaroid figcaption { font-size: 28px; line-height: 1; }
+.polaroid.flip { animation: pop .3s steps(4); }
+
+/* player */
+.player { width: min(100%, 560px); background: #d9c6ff; padding: 0 0 18px; }
+.titlebar { display: flex; justify-content: space-between; align-items: center; background: #b79cf0; padding: 6px 10px; font-family: var(--font-display); font-size: 11px; color: var(--ink); }
+.titlebar b { display: flex; gap: 4px; }
+.titlebar b i { width: 10px; height: 10px; background: var(--paper); box-shadow: 0 0 0 2px var(--ink); }
+.screen { margin: 14px 16px 0; background: #2d1b3d; box-shadow: 0 0 0 3px var(--ink); }
+.screen video { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 50vh; object-fit: contain; background: #2d1b3d; }
+.track { margin: 12px 16px 0; font-family: var(--font-display); font-size: 12px; display: flex; justify-content: space-between; }
+.bar { margin: 8px 16px 0; height: 10px; background: var(--paper); box-shadow: 0 0 0 2px var(--ink); }
+.bar div { height: 100%; width: 0; background: var(--rose); }
+.controls { margin-top: 16px; display: flex; justify-content: center; }
+.songlink { margin: 12px 16px 0; font-size: 20px; line-height: 1.1; }
+.songlink a { color: var(--rose); }
+
+/* reasons */
+.card { width: min(100%, 480px); min-height: 190px; padding: 24px 26px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.card .label { font-size: 13px; color: var(--rose); letter-spacing: .1em; }
+.card p { margin: 0; font-size: 32px; line-height: 1.05; }
+
+.reasons { width: min(100%, 560px); max-height: min(60vh, 560px); overflow-y: auto; text-align: left; padding: 20px 24px; }
+.reasons ol { margin: 0; padding-left: 2.2em; display: flex; flex-direction: column; gap: 8px; font-size: 25px; line-height: 1.05; }
+.reasons li::marker { color: var(--rose); font-variant-numeric: tabular-nums; }
+.reasons li { animation: pop .3s steps(3) both; }
+.reasons .closing { margin: 18px 0 0; padding-top: 14px; border-top: 3px dashed var(--pink); font-size: 27px; line-height: 1.1; color: var(--rose); }
+
+/* counter */
+.counter { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
+.counter .label { font-size: 12px; color: var(--rose); letter-spacing: .08em; }
+.ticks { font-size: 26px; font-variant-numeric: tabular-nums; }
+
+/* question */
+#noBtn.runaway { position: fixed; z-index: 6; transition: left .15s steps(3), top .15s steps(3); }
+#yesBtn { transition: transform .2s steps(3); }
+
+/* music toggle */
+.mute {
+  position: fixed; z-index: 7; width: 44px; height: 44px; border: 0; cursor: pointer;
+  top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px));
+  font-family: var(--font-display); font-size: 20px; color: var(--paper); background: var(--rose);
+  box-shadow: 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 3px 0 var(--ink), 0 -3px 0 var(--ink);
+}
+.mute.off { background: var(--ink); text-decoration: line-through; }
+
+/* finale */
+.couple { display: flex; gap: 4px; align-items: flex-end; }
+.final p { margin: 0; font-size: 28px; line-height: 1.05; }
+.final { max-width: 520px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+.final .big { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--rose); }
+.row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.floater { position: fixed; bottom: -40px; width: 24px; height: 28px; background: center / contain no-repeat; pointer-events: none; animation: rise linear forwards; z-index: 5; }
+@keyframes rise { to { transform: translateY(-115vh) } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; transition: none !important; }
+}
+</style>
+
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<main class="stage">
+  <!-- 1. lock -->
+  <section class="scene" id="lock">
+    <h2>Guess the password</h2>
+    <div class="slots" id="slots"></div>
+    <div class="keypad px" id="keypad"></div>
+    <div class="lockmsg" id="lockmsg"></div>
+  </section>
+
+  <!-- 2. title -->
+  <section class="scene" id="title" hidden>
+    <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:96px"></canvas><canvas class="sprite" data-sprite="boy" style="width:96px"></canvas></div>
+    <h1>For my<br>pretty<br>girl</h1>
+    <button class="btn" data-go="hello" id="startBtn">Start ♥</button>
+  </section>
+
+  <!-- 3. hello -->
+  <section class="scene" id="hello" hidden>
+    <div class="talk">
+      <canvas class="sprite bob" id="speaker" style="width:128px"></canvas>
+      <div class="bubble px" id="helloText"></div>
+    </div>
+    <button class="btn" data-go="gifts">Next →</button>
+  </section>
+
+  <!-- 4. gifts -->
+  <section class="scene" id="gifts" hidden>
+    <h2>Choose your gift</h2>
+    <div class="gifts">
+      <button class="gift" data-go="envelopeScene" data-gift="letter"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">A letter</span></button>
+      <button class="gift" data-go="photos" data-gift="photos"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Us</span></button>
+      <button class="gift" data-go="song" data-gift="song"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Our song</span></button>
+      <button class="gift" data-go="reasons" data-gift="reasons"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Reasons</span></button>
+    </div>
+    <div class="small" id="giftHint">open all four</div>
+    <button class="btn" data-go="finale" id="lastThing" hidden>One last thing →</button>
+  </section>
+
+  <!-- 5a. envelope -->
+  <section class="scene" id="envelopeScene" hidden>
+    <h2>A letter for you</h2>
+    <button class="envelope" id="envelope" aria-label="Open the letter"><span class="seal" id="seal"></span></button>
+    <div class="small">tap to open</div>
+  </section>
+
+  <!-- 5b. letter -->
+  <section class="scene" id="letterScene" hidden>
+    <div class="letter px" id="letter" aria-live="polite"></div>
+    <div class="small">tap the letter to skip ahead</div>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
+  <!-- 6. photos -->
+  <section class="scene" id="photos" hidden>
+    <h2>Us</h2>
+    <figure class="polaroid px" id="polaroid">
+      <img id="photo" alt="">
+      <figcaption id="photoCap"></figcaption>
+    </figure>
+    <div class="dots" id="photoDots"></div>
+    <div class="row">
+      <button class="btn ghost" id="photoPrev">← Prev</button>
+      <button class="btn" id="photoNext">Next →</button>
+    </div>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
+  <!-- 7. song -->
+  <section class="scene" id="song" hidden>
+    <h2>Our song</h2>
+    <div class="player px">
+      <div class="titlebar"><span>♪ now playing</span><b><i></i><i></i><i></i></b></div>
+      <div class="screen"><video id="vid" src="media/us.mp4" poster="media/poster.jpg" playsinline loop preload="metadata"></video></div>
+      <div class="track"><span>Babylove · Orit</span><span id="time">0:00</span></div>
+      <div class="bar"><div id="progress"></div></div>
+      <div class="controls"><button class="btn" id="play">▶ Play</button></div>
+      <p class="songlink" id="songLink" hidden>Babylove isn't loaded yet, so the video plays with its own sound.
+        Listen on <a href="https://open.spotify.com/search/babylove%20orit" target="_blank" rel="noopener">Spotify</a>
+        or <a href="https://www.youtube.com/results?search_query=babylove+orit" target="_blank" rel="noopener">YouTube</a>.</p>
+    </div>
+    <audio id="songAudio" src="media/babylove.mp3" loop preload="auto"></audio>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
+  <!-- 7b. reasons -->
+  <section class="scene" id="reasons" hidden>
+    <h2>Just a few quick reasons why I love you</h2>
+    <div class="reasons px" id="reasonList"></div>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
+  <!-- 8. finale -->
+  <section class="scene" id="finale" hidden>
+    <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:112px"></canvas><canvas class="sprite" data-sprite="boy" style="width:112px"></canvas></div>
+    <div class="final px">
+      <p>If I had to start all over again, I would still choose you.</p>
+      <p>No matter the lifetime, it would always be you.</p>
+      <p class="big">I love you, Jojo ♥</p>
+    </div>
+    <div class="counter px">
+      <div class="label">together since 12 June 2026</div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" data-go="envelopeScene">Read the letter again</button>
+      <button class="btn" data-go="question">One more question →</button>
+    </div>
+  </section>
+
+  <!-- 9. question -->
+  <section class="scene" id="question" hidden>
+    <canvas class="sprite bob" data-sprite="boy" style="width:112px"></canvas>
+    <h1>Jojo, will you be mine forever?</h1>
+    <div class="row" id="answerRow">
+      <button class="btn" id="yesBtn">Yes ♥</button>
+      <button class="btn ghost" id="noBtn">No</button>
+    </div>
+  </section>
+
+  <!-- 10. yes -->
+  <section class="scene" id="yes" hidden>
+    <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:112px"></canvas><canvas class="sprite" data-sprite="boy" style="width:112px"></canvas></div>
+    <h1>I knew it ♥</h1>
+    <div class="final px">
+      <p>Today, tomorrow, and every day after that.</p>
+      <p class="big">I love you, Jojo ♥</p>
+    </div>
+    <div class="row">
+      <button class="btn ghost" data-go="gifts">Back to gifts</button>
+      <button class="btn" id="moreHearts">More hearts</button>
+    </div>
+  </section>
+</main>
+
+<audio id="bgm" src="media/shesmine.mp3" loop preload="auto"></audio>
+<button class="mute" id="mute" hidden aria-label="Mute music">♪</button>
+
+<script>
+/* ---------- edit these ---------- */
+const CONFIG = {
+  password: "1206",                 // 4 digits
+  hint: "hint: our special date ♥",
+  speaker: "boy",                   // "girl" or "boy": who says hi on the first screen
+  hello: "hi jojo, i made something just for you ♥️"
+};
+const LETTER = `I wish you could see yourself through my eyes, even just for a moment, because then you would understand how incredibly special you are to me. You are not just someone I love; you are someone who has touched my soul in a way I never thought possible. I used to say that sometimes words simply aren't enough to explain how much you mean to me, but the truth is, words never come close. They don't capture even a fraction of what you mean to me.
+
+If I could choose one person in this entire world, in every lifetime, I would choose you every single time. No matter how difficult life gets, my heart will always find its way back to you. I want you on your happiest days, but also on the days when everything feels too heavy. I want to be your safe place, the arms you can fall into, and the person who reminds you that you are never alone.
+
+I want to grow with you, laugh with you, create beautiful memories, and share even the smallest moments with you. I don't need a perfect love story. I just want something real with you, something we keep choosing even when life isn't easy.
+
+You have a place in my heart that nobody else could ever replace. I wish you could feel my love for you, because then you would understand just how much you truly mean to me.
+
+If I had to start all over again, I would still choose you. No matter the lifetime, it would always be you.
+
+You are my favourite person, my heart, and the one I will keep choosing today, tomorrow, and every day after that. I love you more than words could ever explain. ♥`;
+const PHOTOS = [
+  ["media/photo1.jpg", "1st of many"],
+  ["media/photo2.jpg", "always by your side"],
+  ["media/photo3.jpg", "the arms you can fall into"]
+];
+const TOGETHER_SINCE = new Date(2026, 5, 12);  // 12 June 2026, midnight local time
+const REASONS = [
+  "You allow me to be the man you deserve, even when I am not.",
+  "Your relationship with Christ.",
+  "You push me to be better with Christ.",
+  "Your compassion.",
+  "How you always think of me.",
+  "How kind you are.",
+  "Your smile.",
+  "Your intelligence.",
+  "The way you make me laugh.",
+  "All the inside jokes we have.",
+  "The things we've shared and the experiences we've been on.",
+  "How life feels when we're together.",
+  "How jolly and full of life you are.",
+  "How proud I am of you.",
+  "You're a great daughter, sister, girlfriend, granddaughter, cousin, friend and best friend.",
+  "Your relationship with my mum and my mister.",
+  "You motivate me and push me to do better.",
+  "You're a go-getter. You set goals and you go after them.",
+  "Your pockets are always full.",
+  "Your beautiful eyes.",
+  "The way you're attentive and pay attention to me.",
+  "The reassurance you give me.",
+  "You made my birthday your most important goal and made me feel so special.",
+  "You've never demanded anything from me.",
+  "Your smile is contagious.",
+  "Again: your smile and your eyes. Your smile and your eyes. I fall in love with them every single time.",
+  "The way you make me feel, every single day.",
+  "I feel interlinked to you.",
+  "My soul knows you are the one for me."
+];
+const REASONS_CLOSING = "There's so much more I could say, and so much more I will say. But words could never describe how my soul yearns for you and how I truly feel about you. I just love everything about you, wholeheartedly. ♥";
+/* -------------------------------- */
+
+const $ = id => document.getElementById(id);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---- pixel art ---- */
+const PAL = { k: "#2a1720", h: "#141012", s: "#6e4128", b: "#9a4a52", e: "#120a0a", m: "#3e1a1e",
+              p: "#ffb3c8", w: "#ffffff", n: "#3b4a78", r: "#e23d75", y: "#ffcf6b", o: "#e8a23c" };
+const SPRITES = {
+  girl: [
+    ".....kkkkkk.....", "...kkhhhhhhkk...", "..khhhhhhhhhhk..", ".khhhhhhhhhhhhk.", ".khhhhhhhhhhhhk.",
+    "khhhsssssssshhhk", "khhssssssssssshk", "khhsswessswesshk", "khhsseessseesshk", "khhbbssssssbbshk",
+    "khhssssmmssssshk", ".khhsssssssshhk.", ".khhhkssssskhhk.", ".khkppppppppkhk.", "..kpppwwwwpppk..",
+    ".ksppppppppppsk.", ".ksppppppppppsk.", "..kppppppppppk..", ".kppppppppppppk.", ".kkkkkkkkkkkkkk.",
+    "....ks....sk....", "....kk....kk...."
+  ],
+  boy: [
+    "...k.kk.kk.k....", "..khkhhkhhkhk...", ".khhhhhhhhhhhk..", ".khhhhhhhhhhhhk.", "khhhhhhhhhhhhhhk",
+    "khhshhshhshhshhk", "khsssssssssssshk", "khsswessswessshk", "khsseessseessshk", "khsbbsssssbbsshk",
+    "hkssssmmsssssskh", "h.kssssssssssk.h", "....kksssskk....", "..knnnwwwwnnnk..", ".knnnnwrrwnnnnk.",
+    ".ksnnnwrrwnnnsk.", ".ksnnnnwwnnnnsk.", "..knnnnnnnnnnk..", "..knnnnkknnnnk..", "..knnnk..knnnk..",
+    "..kkkkk..kkkkk..", "................"
+  ],
+  gift: [
+    "..kk....kk..", ".krrk..krrk.", "..kkrkkrkk..", "kkkkkkkkkkkk", "kyyyyrryyyyk", "kyyyyrryyyyk",
+    "kkkkkkkkkkkk", ".kyoyrryoyk.", ".kyyyrryyyk.", ".kyoyrryoyk.", ".kyyyrryyyk.", ".kkkkkkkkkk."
+  ]
+};
+function drawSprite(cv, rows) {
+  const w = Math.max(...rows.map(r => r.length));
+  cv.width = w; cv.height = rows.length;
+  const g = cv.getContext("2d");
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (PAL[ch]) { g.fillStyle = PAL[ch]; g.fillRect(x, y, 1, 1); }
+  }));
+}
+document.querySelectorAll("canvas[data-sprite]").forEach(cv => drawSprite(cv, SPRITES[cv.dataset.sprite]));
+drawSprite($("speaker"), SPRITES[CONFIG.speaker] || SPRITES.girl);
+
+const HEART = [".kk.kk.", "kppkppk", "kpwpppk", "kpppppk", ".kpppk.", "..kpk..", "...k..."];
+function heartURI(fill, shine = "#ffffff", line = "#3a2340") {
+  let r = "";
+  HEART.forEach((row, y) => [...row].forEach((c, x) => {
+    const col = c === "k" ? line : c === "p" ? fill : c === "w" ? shine : null;
+    if (col) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col}"/>`;
+  }));
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'>${r}</svg>`)}")`;
+}
+const H_RED = heartURI("#e23d75", "#ffb3c8"), H_PINK = heartURI("#ff8fb4"), H_EMPTY = heartURI("#fff4f8", "#fff4f8");
+$("seal").style.backgroundImage = H_RED;
+
+/* ---- sky ---- */
+const sky = $("sky"), sx = sky.getContext("2d"), PX = 4;
+const STOPS = [[125, 111, 208], [168, 132, 224], [233, 158, 214], [255, 184, 205], [255, 214, 196]];
+let stars = [], clouds = [], bank = null;
+function lerp(a, b, t) { return a.map((v, i) => Math.round(v + (b[i] - v) * t)); }
+function makeCloud(w, h, col, shade) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"), blobs = [], n = 3 + Math.floor(w / 12);
+  for (let i = 0; i < n; i++) {
+    const r = h * (0.3 + Math.random() * 0.45);
+    blobs.push({ x: r + Math.random() * Math.max(1, w - 2 * r), y: h - r, r });
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (blobs.some(b => (x - b.x) ** 2 + (y - b.y) ** 2 <= b.r * b.r)) {
+      g.fillStyle = y > h * 0.7 ? shade : col; g.fillRect(x, y, 1, 1);
+    }
+  }
+  return c;
+}
+function buildSky() {
+  sky.width = Math.ceil(innerWidth / PX); sky.height = Math.ceil(innerHeight / PX);
+  const W = sky.width, H = sky.height;
+  stars = Array.from({ length: Math.round(W * H / 260) }, () => ({ x: Math.random() * W | 0, y: Math.random() * H * 0.55 | 0, p: Math.random() * 6 }));
+  clouds = Array.from({ length: Math.max(4, Math.round(W / 45)) }, (_, i) => {
+    const front = i % 3 === 0, w = 28 + Math.random() * 40;
+    return { img: makeCloud(w | 0, (w * 0.4) | 0, front ? "#ffffff" : "#fbe4f2", front ? "#f3c9e4" : "#efc4e3"),
+             x: Math.random() * W, y: H * (0.12 + Math.random() * 0.55), v: front ? 0.12 : 0.05 };
+  });
+  bank = makeCloud(W + 40, Math.max(24, H * 0.2 | 0), "#ffffff", "#f6cfe3");
+}
+function drawSky(t) {
+  const W = sky.width, H = sky.height, bands = 16;
+  for (let i = 0; i < bands; i++) {
+    const f = i / (bands - 1) * (STOPS.length - 1), k = Math.min(STOPS.length - 2, Math.floor(f));
+    sx.fillStyle = `rgb(${lerp(STOPS[k], STOPS[k + 1], f - k)})`;
+    sx.fillRect(0, Math.floor(i * H / bands), W, Math.ceil(H / bands) + 1);
+  }
+  stars.forEach(s => {
+    const a = (Math.sin(t / 700 + s.p) + 1) / 2;
+    sx.fillStyle = `rgba(255,255,255,${0.25 + a * 0.75})`; sx.fillRect(s.x, s.y, 1, 1);
+    if (a > 0.85) { sx.fillRect(s.x - 1, s.y, 3, 1); sx.fillRect(s.x, s.y - 1, 1, 3); }
+  });
+  clouds.forEach(c => {
+    if (!reduce) { c.x += c.v; if (c.x > W) c.x = -c.img.width; }
+    sx.drawImage(c.img, Math.round(c.x), Math.round(c.y));
+  });
+  sx.drawImage(bank, -20 + Math.round(Math.sin(t / 4000) * 8), H - bank.height + 2);
+}
+let lastFrame = 0;
+function loop(t) { if (t - lastFrame > 66) { drawSky(t); lastFrame = t; } if (!reduce) requestAnimationFrame(loop); }
+buildSky(); drawSky(0); requestAnimationFrame(loop);
+addEventListener("resize", () => { buildSky(); drawSky(performance.now()); });
+
+/* ---- scenes ---- */
+const opened = new Set();
+let typing = null;
+function go(id) {
+  document.querySelectorAll(".scene").forEach(s => s.hidden = s.id !== id);
+  if (typing) { typing.cancel(); typing = null; }
+  if (id === "hello") typing = typeInto($("helloText"), CONFIG.hello, 45);
+  if (id === "envelopeScene") $("envelope").classList.remove("open");
+  if (id === "photos") { photoIdx = 0; showPhoto(); }
+  if (id === "reasons") { $("reasonList").scrollTop = 0; burst(12); }
+  if (id === "question") resetNo();
+  if (id === "yes") burst(50);
+  if (id !== "song" && playing) togglePlay();
+  if (id === "gifts") {
+    document.querySelectorAll(".gift").forEach(g => g.classList.toggle("opened", opened.has(g.dataset.gift)));
+    const done = opened.size === 4;
+    $("lastThing").hidden = !done; $("giftHint").hidden = done;
+  }
+  if (id === "finale") { burst(36); tick(); }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-go]"); if (!b) return;
+  if (b.dataset.gift) opened.add(b.dataset.gift);
+  go(b.dataset.go);
+});
+
+function typeInto(el, text, speed, withCursor) {
+  let i = 0, stop = false;
+  const cursor = withCursor ? '<span class="cursor"></span>' : "";
+  const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const render = () => { el.innerHTML = esc(text.slice(0, i)) + (i < text.length ? cursor : ""); };
+  const finish = () => { i = text.length; render(); };
+  const tick = () => {
+    if (stop) return;
+    i++; render();
+    if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+    if (i < text.length) setTimeout(tick, /[.,;]/.test(text[i - 1]) ? speed * 6 : speed);
+  };
+  if (reduce) finish(); else tick();
+  el.onclick = () => { if (i < text.length) { stop = true; finish(); } };
+  return { cancel() { stop = true; } };
+}
+
+/* ---- lock ---- */
+let entry = "";
+function renderSlots() {
+  $("slots").innerHTML = [...CONFIG.password].map((_, i) =>
+    `<span style='background-image:${i < entry.length ? H_RED : H_EMPTY}'></span>`).join("");
+}
+["1","2","3","4","5","6","7","8","9","✕","0","←"].forEach(k => {
+  const b = document.createElement("button");
+  b.className = "key"; b.textContent = k; b.style.backgroundImage = /\d/.test(k) ? H_PINK : H_RED;
+  b.setAttribute("aria-label", k === "✕" ? "Clear" : k === "←" ? "Delete" : k);
+  b.onclick = () => press(k);
+  $("keypad").append(b);
+});
+function press(k) {
+  if (k === "✕") entry = "";
+  else if (k === "←") entry = entry.slice(0, -1);
+  else if (entry.length < CONFIG.password.length) entry += k;
+  renderSlots();
+  if (entry.length === CONFIG.password.length) {
+    if (entry === CONFIG.password) {
+      $("lockmsg").textContent = "You got it! ♥";
+      setTimeout(() => go("title"), 900);
+    } else {
+      $("lockmsg").textContent = "not quite… " + CONFIG.hint;
+      const kp = $("keypad"); kp.classList.remove("shake"); void kp.offsetWidth; kp.classList.add("shake");
+      setTimeout(() => { entry = ""; renderSlots(); }, 450);
+    }
+  }
+}
+addEventListener("keydown", e => {
+  if ($("lock").hidden) return;
+  if (/^\d$/.test(e.key)) press(e.key);
+  else if (e.key === "Backspace") press("←");
+});
+$("lockmsg").textContent = CONFIG.hint;
+renderSlots();
+
+/* ---- envelope ---- */
+$("envelope").onclick = () => {
+  $("envelope").classList.add("open");
+  setTimeout(() => {
+    go("letterScene");
+    $("letter").scrollTop = 0;
+    typing = typeInto($("letter"), LETTER, 28, true);
+  }, reduce ? 0 : 700);
+};
+
+/* ---- photos ---- */
+let photoIdx = 0;
+$("photoDots").innerHTML = PHOTOS.map(() => "<i></i>").join("");
+PHOTOS.forEach(([src]) => { new Image().src = src; });
+function showPhoto() {
+  const [src, cap] = PHOTOS[photoIdx];
+  $("photo").src = src; $("photo").alt = cap; $("photoCap").textContent = cap;
+  $("polaroid").style.transform = `rotate(${[-2, 2, -1][photoIdx % 3]}deg)`;
+  [...$("photoDots").children].forEach((d, i) => d.classList.toggle("on", i === photoIdx));
+  $("photoPrev").disabled = photoIdx === 0;
+  $("photoNext").textContent = photoIdx === PHOTOS.length - 1 ? "Back to gifts" : "Next →";
+}
+$("photoPrev").onclick = () => { if (photoIdx > 0) { photoIdx--; showPhoto(); } };
+$("photoNext").onclick = () => {
+  if (photoIdx === PHOTOS.length - 1) return go("gifts");
+  photoIdx++; showPhoto(); if (photoIdx === PHOTOS.length - 1) burst(12);
+};
+
+/* ---- video + babylove ---- */
+const vid = $("vid"), song = $("songAudio");
+let playing = false, hasSong = true;
+song.addEventListener("error", () => { hasSong = false; vid.muted = false; $("songLink").hidden = false; });
+vid.muted = true;
+async function togglePlay() {
+  if (playing) {
+    playing = false; vid.pause(); song.pause();
+    $("play").textContent = "▶ Play"; bgmResume(); return;
+  }
+  playing = true; $("play").textContent = "❚❚ Pause";
+  bgm.pause();
+  vid.muted = hasSong;
+  try { await vid.play(); } catch (e) {}
+  if (hasSong) { try { await song.play(); } catch (e) { hasSong = false; vid.muted = false; $("songLink").hidden = false; } }
+}
+$("play").onclick = togglePlay;
+vid.onclick = togglePlay;
+song.addEventListener("ended", () => { if (playing) togglePlay(); song.currentTime = 0; });
+setInterval(() => {
+  const src = vid;
+  if (!src.duration) return;
+  $("progress").style.width = src.currentTime / src.duration * 100 + "%";
+  const t = Math.floor(src.currentTime);
+  $("time").textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}, 250);
+
+/* ---- background song ---- */
+const bgm = $("bgm");
+let musicOn = true;
+bgm.volume = 0.7;
+function bgmResume() { if (musicOn && !playing) bgm.play().catch(() => {}); }
+$("startBtn").addEventListener("click", () => { $("mute").hidden = false; bgmResume(); });
+$("mute").onclick = () => {
+  musicOn = !musicOn;
+  $("mute").classList.toggle("off", !musicOn);
+  $("mute").setAttribute("aria-label", musicOn ? "Mute music" : "Play music");
+  if (musicOn) bgmResume(); else bgm.pause();
+};
+
+/* ---- reasons ---- */
+{
+  const ol = document.createElement("ol");
+  REASONS.forEach((r, i) => {
+    const li = document.createElement("li");
+    li.textContent = r; li.style.animationDelay = Math.min(i * 0.05, 1) + "s";
+    ol.append(li);
+  });
+  const end = document.createElement("p");
+  end.className = "closing"; end.textContent = REASONS_CLOSING;
+  $("reasonList").append(ol, end);
+}
+
+/* ---- together counter ---- */
+function tick() {
+  let s = Math.max(0, Math.floor((Date.now() - TOGETHER_SINCE) / 1000));
+  const d = Math.floor(s / 86400); s %= 86400;
+  const h = Math.floor(s / 3600); s %= 3600;
+  const m = Math.floor(s / 60); s %= 60;
+  $("ticks").textContent = `${d} days, ${h} hours, ${m} minutes, ${s} seconds`;
+}
+setInterval(() => { if (!$("finale").hidden) tick(); }, 1000);
+
+/* ---- the question ---- */
+const NO_LINES = ["No", "are you sure?", "try again", "nope ♥", "wrong button", "not an option"];
+let dodges = 0;
+function resetNo() {
+  dodges = 0; $("noBtn").classList.remove("runaway"); $("noBtn").style.left = $("noBtn").style.top = "";
+  $("noBtn").textContent = "No"; $("yesBtn").style.transform = "";
+}
+function dodge(e) {
+  e.preventDefault();
+  const b = $("noBtn"), r = b.getBoundingClientRect();
+  b.classList.add("runaway");
+  const pad = 20;
+  b.style.left = pad + Math.random() * Math.max(0, innerWidth - r.width - pad * 2) + "px";
+  b.style.top = pad + 60 + Math.random() * Math.max(0, innerHeight - r.height - pad * 2 - 60) + "px";
+  dodges++;
+  b.textContent = NO_LINES[dodges % NO_LINES.length];
+  $("yesBtn").style.transform = `scale(${Math.min(1 + dodges * 0.12, 2)})`;
+}
+["pointerenter", "pointerdown", "click"].forEach(ev => $("noBtn").addEventListener(ev, dodge));
+$("yesBtn").onclick = () => go("yes");
+
+/* ---- hearts ---- */
+function burst(n) {
+  if (reduce) return;
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement("div");
+    h.className = "floater";
+    h.style.backgroundImage = Math.random() < 0.5 ? H_RED : H_PINK;
+    h.style.left = Math.random() * 100 + "vw";
+    const s = 16 + Math.random() * 22; h.style.width = s + "px"; h.style.height = s + "px";
+    h.style.animationDuration = 3 + Math.random() * 3 + "s";
+    h.style.animationDelay = Math.random() * 1.5 + "s";
+    document.body.append(h);
+    h.addEventListener("animationend", () => h.remove());
+  }
+}
+$("moreHearts").onclick = () => burst(30);
+</script>
+
+</body>
+</html>
