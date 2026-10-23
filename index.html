@@ -507,6 +507,7 @@ function go(id) {
   if (id !== "song" && playing) togglePlay();
   if (id === "gifts") {
     document.querySelectorAll(".gift").forEach(g => g.classList.toggle("opened", opened.has(g.dataset.gift)));
+    vid.preload = "auto";  // start fetching the video while she opens the other gifts
     const done = opened.size === 4;
     $("lastThing").hidden = !done; $("giftHint").hidden = done;
   }
