@@ -269,15 +269,12 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
     <h2>Our song</h2>
     <div class="player px">
       <div class="titlebar"><span>♪ now playing</span><b><i></i><i></i><i></i></b></div>
-      <div class="screen"><video id="vid" src="media/us.mp4" poster="media/poster.jpg" playsinline loop preload="metadata"></video></div>
+      <div class="screen"><video id="vid" src="media/us-babylove.mp4" poster="media/poster.jpg" playsinline loop preload="metadata"></video></div>
       <div class="track"><span>Babylove · Orit</span><span id="time">0:00</span></div>
       <div class="bar"><div id="progress"></div></div>
       <div class="controls"><button class="btn" id="play">▶ Play</button></div>
-      <p class="songlink" id="songLink" hidden>Babylove isn't loaded yet, so the video plays with its own sound.
-        Listen on <a href="https://open.spotify.com/search/babylove%20orit" target="_blank" rel="noopener">Spotify</a>
-        or <a href="https://www.youtube.com/results?search_query=babylove+orit" target="_blank" rel="noopener">YouTube</a>.</p>
+
     </div>
-    <audio id="songAudio" src="media/babylove.mp3" loop preload="auto"></audio>
     <button class="btn ghost" data-go="gifts">← Back to gifts</button>
   </section>
 
@@ -603,25 +600,22 @@ $("photoNext").onclick = () => {
   photoIdx++; showPhoto(); if (photoIdx === PHOTOS.length - 1) burst(12);
 };
 
-/* ---- video + babylove ---- */
-const vid = $("vid"), song = $("songAudio");
-let playing = false, hasSong = true;
-song.addEventListener("error", () => { hasSong = false; vid.muted = false; $("songLink").hidden = false; });
-vid.muted = true;
+/* ---- video (Babylove is the video's own soundtrack) ---- */
+const vid = $("vid");
+let playing = false;
 async function togglePlay() {
   if (playing) {
-    playing = false; vid.pause(); song.pause();
+    playing = false; vid.pause();
     $("play").textContent = "▶ Play"; bgmResume(); return;
   }
   playing = true; $("play").textContent = "❚❚ Pause";
   bgm.pause();
-  vid.muted = hasSong;
-  try { await vid.play(); } catch (e) {}
-  if (hasSong) { try { await song.play(); } catch (e) { hasSong = false; vid.muted = false; $("songLink").hidden = false; } }
+  vid.muted = false;
+  try { await vid.play(); }
+  catch (e) { playing = false; $("play").textContent = "▶ Play"; bgmResume(); }
 }
 $("play").onclick = togglePlay;
 vid.onclick = togglePlay;
-song.addEventListener("ended", () => { if (playing) togglePlay(); song.currentTime = 0; });
 setInterval(() => {
   const src = vid;
   if (!src.duration) return;
