@@ -169,6 +169,16 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 .verses blockquote, .myverse blockquote { margin: 0; font-size: 26px; line-height: 1.08; }
 .myverse { width: min(100%, 520px); padding: 16px 20px; text-align: left; }
 
+/* our story */
+.story ol { list-style: none; padding: 0 0 0 22px; margin: 0; display: flex; flex-direction: column; gap: 22px; border-left: 3px dashed var(--pink); }
+.story li { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.story li::before { content: ""; position: absolute; left: -34px; top: 2px; width: 18px; height: 18px; background: center / contain no-repeat var(--heart); }
+.story .when { font-family: var(--font-display); font-size: 12px; letter-spacing: .08em; color: var(--rose); }
+.story .what { font-size: 27px; line-height: 1.05; }
+.story .pics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.story img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--blush); box-shadow: 0 0 0 3px var(--ink); }
+.story .forever { font-size: 30px; color: var(--rose); text-align: center; padding-top: 6px; }
+
 /* counter */
 .counter { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
 .counter .label { font-size: 12px; color: var(--rose); letter-spacing: .08em; }
@@ -239,6 +249,7 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
       <button class="gift" data-go="song" data-gift="song"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Our song</span></button>
       <button class="gift" data-go="reasons" data-gift="reasons"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Reasons</span></button>
       <button class="gift" data-go="verses" data-gift="verses"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Your verses</span></button>
+      <button class="gift" data-go="story" data-gift="story"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Our story</span></button>
     </div>
     <div class="small" id="giftHint">open them all</div>
     <button class="btn" data-go="finale" id="lastThing" hidden>One last thing →</button>
@@ -315,6 +326,13 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
         <blockquote>Nay, in all these things we are more than conquerors through him that loved us. For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come, nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord.</blockquote>
       </figure>
     </div>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
+  <!-- 7d. our story -->
+  <section class="scene" id="story" hidden>
+    <h2>Our story</h2>
+    <div class="reasons px story" id="storyList"></div>
     <button class="btn ghost" data-go="gifts">← Back to gifts</button>
   </section>
 
@@ -510,6 +528,30 @@ const REASONS = [
   "You're an answer to my prayers."
 ];
 const REASONS_CLOSING = "There's so much more I could say, and so much more I will say. But words could never describe how my soul yearns for you and how I truly feel about you. I just love everything about you, wholeheartedly. ♥";
+const STORY = [
+  ["10/04", "pre first date", ["tl-bowling"]],
+  ["11/04", "first date", ["photo15"]],
+  ["13/04", "first cinema date", ["tl-cinema"]],
+  ["17/04", "still inseparable", ["tl-insep"]],
+  ["30/04", "pre lei date", ["tl-lei"]],
+  ["16/05", "swiss butter x build a bear", ["tl-bear", "photo16"]],
+  ["22/05", "birthday flowers", ["photo14"]],
+  ["23/05", "your birthday", ["tl-bday"]],
+  ["05/06", "first sleepover", ["tl-sleepover"]],
+  ["12/06", "making you my girlfriend", ["photo13", "photo12"]],
+  ["14/06", "vase stays full", ["tl-vase"]],
+  ["01/07", "chipotle date", ["tl-chipotle", "tl-portrait"]],
+  ["10/07", "erranding run", ["tl-nails"]],
+  ["15/07", "aquarium", ["photo8"]],
+  ["01/08", "national gf day", ["photo9"]],
+  ["05/08", "bottomless brunch", ["photo10"]],
+  ["Aug", "baecation first", ["tl-donjulio", "photo7"]],
+  ["10/08", "baecation ❤️", ["tl-elevator", "photo5"]],
+  ["11/08", "baecation 💕", ["tl-pink", "photo4"]],
+  ["12/08", "baecation last day", ["tl-hallway"]],
+  ["24/09", "promise ring", ["tl-ring"]],
+  ["13/10", "vase still staying full", ["tl-roses"]]
+];
 /* -------------------------------- */
 
 const $ = id => document.getElementById(id);
@@ -625,6 +667,7 @@ function go(id) {
   if (id === "photos") { photoIdx = 0; showPhoto(); }
   if (id === "reasons") { $("reasonList").scrollTop = 0; burst(12); }
   if (id === "verses") burst(10);
+  if (id === "story") $("storyList").scrollTop = 0;
   if (id === "question") resetNo();
   if (id === "yes") burst(50);
   if (id !== "song" && playing) togglePlay();
@@ -781,6 +824,28 @@ $("mute").onclick = () => {
   end.className = "closing"; end.textContent = REASONS_CLOSING;
   ol.append(end);
   $("reasonList").append(ol);
+}
+
+/* ---- our story ---- */
+{
+  const ol = document.createElement("ol");
+  STORY.forEach(([when, what, pics]) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="when"></span><span class="what"></span><div class="pics"></div>`;
+    li.querySelector(".when").textContent = when;
+    li.querySelector(".what").textContent = what;
+    pics.forEach(name => {
+      const img = document.createElement("img");
+      img.src = `media/${name}.jpg`; img.alt = what; img.loading = "lazy"; img.decoding = "async";
+      li.querySelector(".pics").append(img);
+    });
+    ol.append(li);
+  });
+  const end = document.createElement("li");
+  end.innerHTML = `<span class="forever">∞ and here's to many, many more ♥</span>`;
+  ol.append(end);
+  $("storyList").append(ol);
+  $("storyList").style.setProperty("--heart", H_RED);
 }
 
 /* ---- together counter ---- */
