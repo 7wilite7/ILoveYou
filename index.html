@@ -102,7 +102,7 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 @media (max-width: 560px) { .bubble::before { display: none; } }
 
 /* gifts */
-.gifts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; width: 100%; max-width: 680px; }
+.gifts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; width: 100%; max-width: 520px; }
 @media (max-width: 520px) { .gifts { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 320px; } }
 .gift { background: none; border: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px; }
 .gift canvas { width: min(96px, 22vw); height: auto; }
@@ -160,6 +160,14 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 .reasons li::marker { color: var(--rose); font-variant-numeric: tabular-nums; }
 .reasons li { animation: pop .3s steps(3) both; }
 .reasons .closing { margin: 18px 0 0; padding-top: 14px; border-top: 3px dashed var(--pink); font-size: 27px; line-height: 1.1; color: var(--rose); }
+
+/* verses */
+.verses { display: flex; flex-direction: column; gap: 18px; }
+.verses figure, .myverse { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.verses figure + figure { padding-top: 16px; border-top: 3px dashed var(--pink); }
+.verses figcaption, .myverse figcaption { font-family: var(--font-display); font-size: 12px; letter-spacing: .08em; color: var(--rose); }
+.verses blockquote, .myverse blockquote { margin: 0; font-size: 26px; line-height: 1.08; }
+.myverse { width: min(100%, 520px); padding: 16px 20px; text-align: left; }
 
 /* counter */
 .counter { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
@@ -230,8 +238,9 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
       <button class="gift" data-go="photos" data-gift="photos"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Us</span></button>
       <button class="gift" data-go="song" data-gift="song"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Our song</span></button>
       <button class="gift" data-go="reasons" data-gift="reasons"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Reasons</span></button>
+      <button class="gift" data-go="verses" data-gift="verses"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Your verses</span></button>
     </div>
-    <div class="small" id="giftHint">open all four</div>
+    <div class="small" id="giftHint">open them all</div>
     <button class="btn" data-go="finale" id="lastThing" hidden>One last thing →</button>
   </section>
 
@@ -285,6 +294,30 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
     <button class="btn ghost" data-go="gifts">← Back to gifts</button>
   </section>
 
+  <!-- 7c. verses -->
+  <section class="scene" id="verses" hidden>
+    <h2>Your favourite verses</h2>
+    <div class="reasons px verses">
+      <figure>
+        <figcaption>Jeremiah 29:11 · KJV</figcaption>
+        <blockquote>For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.</blockquote>
+      </figure>
+      <figure>
+        <figcaption>Proverbs 16:33 · NLT</figcaption>
+        <blockquote>We may throw the dice, but the Lord determines how they fall.</blockquote>
+      </figure>
+      <figure>
+        <figcaption>Luke 12:23 · NIV</figcaption>
+        <blockquote>For life is more than food, and the body more than clothes.</blockquote>
+      </figure>
+      <figure>
+        <figcaption>Romans 8:37–39 · KJV</figcaption>
+        <blockquote>Nay, in all these things we are more than conquerors through him that loved us. For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come, nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord.</blockquote>
+      </figure>
+    </div>
+    <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+  </section>
+
   <!-- 8. finale -->
   <section class="scene" id="finale" hidden>
     <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:112px"></canvas><canvas class="sprite" data-sprite="boy" style="width:112px"></canvas></div>
@@ -293,6 +326,10 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
       <p>No matter the lifetime, it would always be you.</p>
       <p class="big">I love you, Jojo ♥</p>
     </div>
+    <figure class="myverse px">
+      <figcaption>my verse to you · Song of Songs 4:1 · NLT</figcaption>
+      <blockquote>You are beautiful, my darling, beautiful beyond words. Your eyes are like doves behind your veil. Your hair falls in waves, like a flock of goats winding down the slopes of Gilead.</blockquote>
+    </figure>
     <div class="counter px">
       <div class="label">together since 12 June 2026</div>
       <div class="ticks" id="ticks"></div>
@@ -587,13 +624,14 @@ function go(id) {
   if (id === "envelopeScene") $("envelope").classList.remove("open");
   if (id === "photos") { photoIdx = 0; showPhoto(); }
   if (id === "reasons") { $("reasonList").scrollTop = 0; burst(12); }
+  if (id === "verses") burst(10);
   if (id === "question") resetNo();
   if (id === "yes") burst(50);
   if (id !== "song" && playing) togglePlay();
   if (id === "gifts") {
     document.querySelectorAll(".gift").forEach(g => g.classList.toggle("opened", opened.has(g.dataset.gift)));
     vid.preload = "auto";  // start fetching the video while she opens the other gifts
-    const done = opened.size === 4;
+    const done = opened.size === document.querySelectorAll(".gift").length;
     $("lastThing").hidden = !done; $("giftHint").hidden = done;
   }
   if (id === "finale") { burst(36); tick(); }
