@@ -128,7 +128,7 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 @keyframes blink { 50% { opacity: 0 } }
 
 /* photos */
-.dots { display: flex; gap: 8px; justify-content: center; }
+.dots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 320px; }
 .dots i { width: 10px; height: 10px; background: var(--paper); box-shadow: 0 0 0 2px var(--ink); opacity: .45; }
 .dots i.on { background: var(--rose); opacity: 1; }
 .polaroid { margin: 4px; padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; width: min(100%, 360px); transform: rotate(-2deg); }
@@ -353,7 +353,22 @@ You are my favourite person, my heart, and the one I will keep choosing today, t
 const PHOTOS = [
   ["media/photo1.jpg", "1st of many"],
   ["media/photo2.jpg", "always by your side"],
-  ["media/photo3.jpg", "the arms you can fall into"]
+  ["media/photo3.jpg", "the arms you can fall into"],
+  ["media/photo4.jpg", "pretty in pink, and all mine"],
+  ["media/photo5.jpg", "that kiss face gets me every time"],
+  ["media/photo6.jpg", "my arm's favourite place"],
+  ["media/photo7.jpg", "the main character, and I'm happy in the background"],
+  ["media/photo8.jpg", "you're the prettiest thing in the whole aquarium"],
+  ["media/photo9.jpg", "little things, big love"],
+  ["media/photo10.jpg", "cheers to us"],
+  ["media/photo11.jpg", "jolly and full of life, always"],
+  ["media/photo12.jpg", "date nights with you are my favourite"],
+  ["media/photo13.jpg", "lost in a room of mirrors, found in you"],
+  ["media/photo14.jpg", "flowers for my flower"],
+  ["media/photo15.jpg", "you deserve all the roses"],
+  ["media/photo16.jpg", "my favourite dinner date"],
+  ["media/photo17.jpg", "even through a screen, you feel like home"],
+  ["media/photo18.jpg", "your smile is contagious"]
 ];
 const TOGETHER_SINCE = new Date(2026, 5, 12);  // 12 June 2026, midnight local time
 const REASONS = [
@@ -395,21 +410,21 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---- pixel art ---- */
 const PAL = { k: "#2a1720", h: "#141012", s: "#6e4128", b: "#9a4a52", e: "#120a0a", m: "#3e1a1e",
-              p: "#ffb3c8", w: "#ffffff", n: "#3b4a78", r: "#e23d75", y: "#ffcf6b", o: "#e8a23c" };
+              p: "#ffb3c8", w: "#ffffff", n: "#5b6f9c", r: "#e23d75", y: "#ffcf6b", o: "#e8a23c", g: "#9a5a2c" };
 const SPRITES = {
   girl: [
-    ".....kkkkkk.....", "...kkhhhhhhkk...", "..khhhhhhhhhhk..", ".khhhhhhhhhhhhk.", ".khhhhhhhhhhhhk.",
-    "khhhsssssssshhhk", "khhssssssssssshk", "khhsswessswesshk", "khhsseessseesshk", "khhbbssssssbbshk",
-    "khhssssmmssssshk", ".khhsssssssshhk.", ".khhhkssssskhhk.", ".khkppppppppkhk.", "..kpppwwwwpppk..",
+    ".....kkkkkk.....", "...kkggggggkk...", "..kggggggggggk..", ".kggggggggggggk.", ".kggggggggggggk.",
+    "kgggsssssssssggk", "kggssssssssssggk", "kggskwesswekssgk", "kggsseesseesssgk", "kggbbssssssbbsgk",
+    "kggsssmwwmssssgk", ".kggssssssssggk.", ".kgggkssssskggk.", ".kgkppyyyyppkgk.", "..kpppwwwwpppk..",
     ".ksppppppppppsk.", ".ksppppppppppsk.", "..kppppppppppk..", ".kppppppppppppk.", ".kkkkkkkkkkkkkk.",
     "....ks....sk....", "....kk....kk...."
   ],
   boy: [
-    "...k.kk.kk.k....", "..khkhhkhhkhk...", ".khhhhhhhhhhhk..", ".khhhhhhhhhhhhk.", "khhhhhhhhhhhhhhk",
-    "khhshhshhshhshhk", "khsssssssssssshk", "khsswessswessshk", "khsseessseessshk", "khsbbsssssbbsshk",
-    "hkssssmmsssssskh", "h.kssssssssssk.h", "....kksssskk....", "..knnnwwwwnnnk..", ".knnnnwrrwnnnnk.",
-    ".ksnnnwrrwnnnsk.", ".ksnnnnwwnnnnsk.", "..knnnnnnnnnnk..", "..knnnnkknnnnk..", "..knnnk..knnnk..",
-    "..kkkkk..kkkkk..", "................"
+    "....kkkkkkkk....", "...khkhkhkhkk...", "..khkhkhkhkhkk..", ".khkhkhkhkhkhkk.", ".khkhkhkhkhkhkk.",
+    ".khsssssssssshk.", ".ksskkssskksssk.", ".ksswessswesssk.", ".ksseessseesssk.", ".ksbbsssssbbssk.",
+    ".kssshmwwmhsssk.", "..khsssssssshk..", "...khhshhshhk...", "....kkhhhhkk....", "......kssk......",
+    "..kwwwwkkwwwwk..", ".kwwwwwwwwwwwwk.", ".kswwwwwwwwwwsk.", ".kswwwwwwwwwwsk.", "..knnnnnnnnnnk..",
+    "..knnnk..knnnk..", "..kkkkk..kkkkk.."
   ],
   gift: [
     "..kk....kk..", ".krrk..krrk.", "..kkrkkrkk..", "kkkkkkkkkkkk", "kyyyyrryyyyk", "kyyyyrryyyyk",
@@ -586,15 +601,23 @@ $("envelope").onclick = () => {
 /* ---- photos ---- */
 let photoIdx = 0;
 $("photoDots").innerHTML = PHOTOS.map(() => "<i></i>").join("");
-PHOTOS.forEach(([src]) => { new Image().src = src; });
 function showPhoto() {
   const [src, cap] = PHOTOS[photoIdx];
   $("photo").src = src; $("photo").alt = cap; $("photoCap").textContent = cap;
+  if (PHOTOS[photoIdx + 1]) new Image().src = PHOTOS[photoIdx + 1][0];
   $("polaroid").style.transform = `rotate(${[-2, 2, -1][photoIdx % 3]}deg)`;
   [...$("photoDots").children].forEach((d, i) => d.classList.toggle("on", i === photoIdx));
   $("photoPrev").disabled = photoIdx === 0;
   $("photoNext").textContent = photoIdx === PHOTOS.length - 1 ? "Back to gifts" : "Next →";
 }
+let touchX = null;
+$("polaroid").addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+$("polaroid").addEventListener("touchend", e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX; touchX = null;
+  if (dx < -40 && photoIdx < PHOTOS.length - 1) $("photoNext").click();
+  if (dx > 40 && photoIdx > 0) $("photoPrev").click();
+});
 $("photoPrev").onclick = () => { if (photoIdx > 0) { photoIdx--; showPhoto(); } };
 $("photoNext").onclick = () => {
   if (photoIdx === PHOTOS.length - 1) return go("gifts");
