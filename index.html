@@ -211,10 +211,14 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 .final { max-width: 520px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
 .final .big { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--rose); }
 .row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-.wallpic { position: fixed; z-index: 0; width: min(24vw, 120px); padding: 5px 5px 14px; background: var(--paper); box-shadow: 0 0 0 3px var(--ink), 4px 6px 0 rgba(74,36,83,.25);
-  transform: rotate(var(--r)); opacity: .9; pointer-events: none; animation: drop .7s steps(6) both; }
+/* yes: message sits at the bottom so the photo wall above it stays visible */
+#yes { align-self: end; gap: 14px; }
+#yes h1 { font-size: clamp(26px, 6vw, 44px); }
+.wallpic { position: fixed; z-index: 0; padding: 5px 5px 14px; background: var(--paper); box-shadow: 0 0 0 3px var(--ink), 4px 6px 0 rgba(74,36,83,.25);
+  transform: rotate(var(--r)); pointer-events: none; visibility: hidden; }
+.wallpic.in { visibility: visible; animation: drop .9s cubic-bezier(.25, 1.25, .5, 1) both; }
 .wallpic img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-@keyframes drop { from { transform: translateY(-120vh) rotate(0deg); } to { transform: rotate(var(--r)); } }
+@keyframes drop { from { transform: translateY(-110vh) rotate(0deg); } to { transform: translateY(0) rotate(var(--r)); } }
 .stage { z-index: 1; }
 .floater { position: fixed; bottom: -40px; width: 24px; height: 28px; background: center / contain no-repeat; pointer-events: none; animation: rise linear forwards; z-index: 5; }
 @keyframes rise { to { transform: translateY(-115vh) } }
@@ -399,7 +403,6 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 
   <!-- 10. yes -->
   <section class="scene" id="yes" hidden>
-    <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:112px"></canvas><canvas class="sprite" data-sprite="boy" style="width:112px"></canvas></div>
     <h1>I knew it ♥</h1>
     <div class="final px">
       <p>Today, tomorrow, and every day after that.</p>
@@ -711,7 +714,7 @@ function go(id) {
     const done = opened.size === document.querySelectorAll(".gift").length;
     $("lastThing").hidden = !done; $("giftHint").hidden = done;
   }
-  if (id === "finale") { burst(36); tick(); }
+  if (id === "finale") { burst(36); tick(); preloadWall(); }
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
@@ -927,21 +930,38 @@ function slide(pos) {
 $("shuffleBtn").onclick = newPuzzle;
 
 /* ---- yes: polaroid wall ---- */
-function clearWall() { document.querySelectorAll(".wallpic").forEach(el => el.remove()); }
+const WALL = PHOTOS.map(([src]) => "media/wall/" + src.split("/").pop()).slice(0, 18);
+let wallTimers = [];
+function preloadWall() { WALL.forEach(src => { new Image().src = src; }); }
+function clearWall() {
+  wallTimers.forEach(clearTimeout); wallTimers = [];
+  document.querySelectorAll(".wallpic").forEach(el => el.remove());
+}
 function photoWall() {
   clearWall();
-  const pics = PHOTOS.slice(0, 18);
-  pics.forEach(([src], i) => {
+  // the photos fill the space above the message, so nothing covers them
+  const msgTop = $("yes").getBoundingClientRect().top;
+  const cols = innerWidth < 520 ? 4 : 6;
+  const w = Math.min(130, (innerWidth - 24) / cols * 1.1);
+  const h = w + 19, area = Math.max(h, msgTop - 12);
+  let rows = Math.max(1, Math.ceil((area - h) / (h * 0.75)) + 1);
+  const count = Math.min(WALL.length, cols * rows);
+  rows = Math.ceil(count / cols);  // spread the rows we actually fill down to the message
+  const stepX = (innerWidth - w) / Math.max(1, cols - 1), stepY = rows > 1 ? (area - h) / (rows - 1) : 0;
+  for (let i = 0; i < count; i++) {
+    const col = i % cols, row = Math.floor(i / cols);
     const el = document.createElement("div");
     el.className = "wallpic";
-    el.innerHTML = `<img alt="" src="${src}">`;
-    const col = i % 6, row = Math.floor(i / 6);
-    el.style.left = (col * 16.6 + Math.random() * 6 - 3) + "vw";
-    el.style.top = (row * 30 + Math.random() * 10) + "vh";
-    el.style.setProperty("--r", (Math.random() * 30 - 15) + "deg");
-    el.style.animationDelay = reduce ? "0s" : (i * 0.12) + "s";
-    document.body.append(el);
-  });
+    el.style.width = w + "px";
+    el.style.left = Math.max(0, Math.min(innerWidth - w, col * stepX + (Math.random() * 16 - 8))) + "px";
+    el.style.top = Math.max(0, row * stepY + (Math.random() * 12 - 6)) + "px";
+    el.style.setProperty("--r", (Math.random() * 24 - 12) + "deg");
+    const img = new Image(); img.alt = "";
+    el.append(img); document.body.append(el);
+    const start = () => wallTimers.push(setTimeout(() => el.classList.add("in"), reduce ? 0 : i * 140));
+    img.onload = start; img.onerror = () => el.remove();
+    img.src = WALL[i];
+  }
 }
 
 /* ---- together counter ---- */
