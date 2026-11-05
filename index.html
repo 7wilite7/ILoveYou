@@ -102,8 +102,9 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 @media (max-width: 560px) { .bubble::before { display: none; } }
 
 /* gifts */
-.gifts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; width: 100%; max-width: 520px; }
-@media (max-width: 520px) { .gifts { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 320px; } }
+.gifts { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; width: 100%; max-width: 520px; }
+.gifts .gift { flex: 0 0 calc((100% - 36px) / 3); }
+@media (max-width: 520px) { .gifts { max-width: 320px; } .gifts .gift { flex-basis: calc((100% - 18px) / 2); } }
 .gift { background: none; border: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px; }
 .gift canvas { width: min(96px, 22vw); height: auto; }
 .gift:hover canvas { animation: wiggle .5s steps(4) infinite; }
@@ -179,10 +180,17 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 .story img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--blush); box-shadow: 0 0 0 3px var(--ink); }
 .story .forever { font-size: 30px; color: var(--rose); text-align: center; padding-top: 6px; }
 
+/* puzzle */
+.board { position: relative; width: min(84vw, 330px); aspect-ratio: 1; max-width: 100%; background: var(--ink); }
+.tile { position: absolute; width: calc(100% / 3); height: calc(100% / 3); border: 0; padding: 0; cursor: pointer;
+  background: url("media/puzzle.jpg") 0 0 / 300% 300% no-repeat; box-shadow: inset 0 0 0 2px var(--ink); transition: left .15s steps(3), top .15s steps(3); }
+.board.solved .tile { box-shadow: none; cursor: default; }
+
 /* counter */
 .counter { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
 .counter .label { font-size: 12px; color: var(--rose); letter-spacing: .08em; }
 .ticks { font-size: 26px; font-variant-numeric: tabular-nums; }
+.counter .annlabel { margin-top: 8px; padding-top: 10px; border-top: 3px dashed var(--pink); font-size: 12px; }
 
 /* question */
 #noBtn.runaway { position: fixed; z-index: 6; transition: left .15s steps(3), top .15s steps(3); }
@@ -203,6 +211,11 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
 .final { max-width: 520px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
 .final .big { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--rose); }
 .row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.wallpic { position: fixed; z-index: 0; width: min(24vw, 120px); padding: 5px 5px 14px; background: var(--paper); box-shadow: 0 0 0 3px var(--ink), 4px 6px 0 rgba(74,36,83,.25);
+  transform: rotate(var(--r)); opacity: .9; pointer-events: none; animation: drop .7s steps(6) both; }
+.wallpic img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+@keyframes drop { from { transform: translateY(-120vh) rotate(0deg); } to { transform: rotate(var(--r)); } }
+.stage { z-index: 1; }
 .floater { position: fixed; bottom: -40px; width: 24px; height: 28px; background: center / contain no-repeat; pointer-events: none; animation: rise linear forwards; z-index: 5; }
 @keyframes rise { to { transform: translateY(-115vh) } }
 
@@ -250,6 +263,7 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
       <button class="gift" data-go="reasons" data-gift="reasons"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Reasons</span></button>
       <button class="gift" data-go="verses" data-gift="verses"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Your verses</span></button>
       <button class="gift" data-go="story" data-gift="story"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">Our story</span></button>
+      <button class="gift" data-go="puzzle" data-gift="puzzle"><canvas class="sprite" data-sprite="gift"></canvas><span class="label">A puzzle</span></button>
     </div>
     <div class="small" id="giftHint">open them all</div>
     <button class="btn" data-go="finale" id="lastThing" hidden>One last thing →</button>
@@ -336,6 +350,20 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
     <button class="btn ghost" data-go="gifts">← Back to gifts</button>
   </section>
 
+  <!-- 7e. puzzle -->
+  <section class="scene" id="puzzle" hidden>
+    <h2>Put us back together</h2>
+    <div class="board px" id="board" aria-label="Slide puzzle"></div>
+    <div class="small" id="puzzleHint">tap a tile next to the gap to slide it</div>
+    <div class="final px" id="puzzleDone" hidden>
+      <p class="big">12/06 · the day you became mine ♥</p>
+    </div>
+    <div class="row">
+      <button class="btn ghost" data-go="gifts">← Back to gifts</button>
+      <button class="btn" id="shuffleBtn">Shuffle again</button>
+    </div>
+  </section>
+
   <!-- 8. finale -->
   <section class="scene" id="finale" hidden>
     <div class="couple bob"><canvas class="sprite" data-sprite="girl" style="width:112px"></canvas><canvas class="sprite" data-sprite="boy" style="width:112px"></canvas></div>
@@ -351,6 +379,7 @@ button:focus-visible { outline: 3px dashed var(--paper); outline-offset: 8px; }
     <div class="counter px">
       <div class="label">together since 12 June 2026</div>
       <div class="ticks" id="ticks"></div>
+      <div class="label annlabel" id="annCount"></div>
     </div>
     <div class="row">
       <button class="btn ghost" data-go="envelopeScene">Read the letter again</button>
@@ -672,7 +701,9 @@ function go(id) {
   if (id === "verses") burst(10);
   if (id === "story") $("storyList").scrollTop = 0;
   if (id === "question") resetNo();
-  if (id === "yes") burst(50);
+  if (id === "yes") { burst(50); photoWall(); }
+  if (id === "puzzle" && !puzzleReady) newPuzzle();
+  if (id !== "yes") clearWall();
   if (id !== "song" && playing) togglePlay();
   if (id === "gifts") {
     document.querySelectorAll(".gift").forEach(g => g.classList.toggle("opened", opened.has(g.dataset.gift)));
@@ -851,8 +882,81 @@ $("mute").onclick = () => {
   $("storyList").style.setProperty("--heart", H_RED);
 }
 
+/* ---- slide puzzle ---- */
+let order = [], puzzleReady = false;
+function drawPuzzle() {
+  const board = $("board"); board.innerHTML = "";
+  order.forEach((t, pos) => {
+    if (t === 8 && !board.classList.contains("solved")) return;  // the gap
+    const b = document.createElement("button");
+    b.className = "tile"; b.setAttribute("aria-label", "tile " + (t + 1));
+    b.style.left = (pos % 3) * 100 / 3 + "%"; b.style.top = Math.floor(pos / 3) * 100 / 3 + "%";
+    b.style.backgroundPosition = `${(t % 3) * 50}% ${Math.floor(t / 3) * 50}%`;
+    b.onclick = () => slide(pos);
+    board.append(b);
+  });
+}
+function neighbours(pos) {
+  const r = Math.floor(pos / 3), c = pos % 3, out = [];
+  if (r > 0) out.push(pos - 3); if (r < 2) out.push(pos + 3);
+  if (c > 0) out.push(pos - 1); if (c < 2) out.push(pos + 1);
+  return out;
+}
+function newPuzzle() {
+  order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  let gap = 8, prev = -1;
+  for (let i = 0; i < 80; i++) {  // random legal moves keep it solvable
+    const opts = neighbours(gap).filter(p => p !== prev);
+    const pick = opts[Math.floor(Math.random() * opts.length)];
+    [order[gap], order[pick]] = [order[pick], order[gap]]; prev = gap; gap = pick;
+  }
+  if (order.every((t, i) => t === i)) return newPuzzle();
+  $("board").classList.remove("solved"); $("puzzleDone").hidden = true; $("puzzleHint").hidden = false;
+  puzzleReady = true; drawPuzzle();
+}
+function slide(pos) {
+  if ($("board").classList.contains("solved")) return;
+  const gap = order.indexOf(8);
+  if (!neighbours(gap).includes(pos)) return;
+  [order[gap], order[pos]] = [order[pos], order[gap]];
+  if (order.every((t, i) => t === i)) {
+    $("board").classList.add("solved"); $("puzzleDone").hidden = false; $("puzzleHint").hidden = true; burst(30);
+  }
+  drawPuzzle();
+}
+$("shuffleBtn").onclick = newPuzzle;
+
+/* ---- yes: polaroid wall ---- */
+function clearWall() { document.querySelectorAll(".wallpic").forEach(el => el.remove()); }
+function photoWall() {
+  clearWall();
+  const pics = PHOTOS.slice(0, 18);
+  pics.forEach(([src], i) => {
+    const el = document.createElement("div");
+    el.className = "wallpic";
+    el.innerHTML = `<img alt="" src="${src}">`;
+    const col = i % 6, row = Math.floor(i / 6);
+    el.style.left = (col * 16.6 + Math.random() * 6 - 3) + "vw";
+    el.style.top = (row * 30 + Math.random() * 10) + "vh";
+    el.style.setProperty("--r", (Math.random() * 30 - 15) + "deg");
+    el.style.animationDelay = reduce ? "0s" : (i * 0.12) + "s";
+    document.body.append(el);
+  });
+}
+
 /* ---- together counter ---- */
+function anniversaryText() {
+  const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let year = TOGETHER_SINCE.getFullYear() + 1;
+  while (new Date(year, TOGETHER_SINCE.getMonth(), TOGETHER_SINCE.getDate()) < today) year++;
+  const next = new Date(year, TOGETHER_SINCE.getMonth(), TOGETHER_SINCE.getDate());
+  const days = Math.round((next - today) / 86400000), n = year - TOGETHER_SINCE.getFullYear();
+  const which = n === 1 ? "1-year" : n + "-year";
+  if (days === 0) return `happy ${which} anniversary ♥`;
+  return `${days} day${days === 1 ? "" : "s"} until our ${which} anniversary ♥`;
+}
 function tick() {
+  $("annCount").textContent = anniversaryText();
   let s = Math.max(0, Math.floor((Date.now() - TOGETHER_SINCE) / 1000));
   const d = Math.floor(s / 86400); s %= 86400;
   const h = Math.floor(s / 3600); s %= 3600;
